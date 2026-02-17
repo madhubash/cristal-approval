@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GRAPHIC
+  CREATIVE
+  COPYWRITER
+  SMM
+  SERVICING
+  CLIENT
+}
+
+enum Status {
+  WAITING_CREATIVE
+  WAITING_COPY
+  WAITING_SMM
+  WAITING_SERVICING
+  WAITING_CLIENT
+  CLIENT_APPROVED
+  READY_PUBLISH
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     Role
+  company  String?
+  contents Content[] @relation("Uploader")
+  approvals Approval[]
+  notifications Notification[]
+}
+
+model Content {
+  id          Int      @id @default(autoincrement())
+  title       String
+  clientName  String
+  platform    String
+  filePath    String
+  caption     String?
+  status      Status   @default(WAITING_CREATIVE)
+  publishDate DateTime?
+  uploadedBy  Int
+  uploader    User     @relation("Uploader", fields: [uploadedBy], references: [id])
+  approvals   Approval[]
+  notifications Notification[]
+  createdAt   DateTime @default(now())
+}
+
+model Approval {
+  id        Int      @id @default(autoincrement())
+  contentId Int
+  role      Role
+  userId    Int
+  decision  String
+  comment   String?
+  createdAt DateTime @default(now())
+  content   Content  @relation(fields: [contentId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  contentId Int?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  content   Content? @relation(fields: [contentId], references: [id])
+}
